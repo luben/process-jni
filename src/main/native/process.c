@@ -4,6 +4,8 @@
 #include <sys/wait.h>
 #include <sys/prctl.h>
 #include <spawn.h>
+#include <grp.h>
+#include <pwd.h>
 #include <jni.h>
 
 extern char **environ;
@@ -95,7 +97,6 @@ JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_posix_1spawn
     return pid;
 }
 
-
 /*
  * Class:     com_github_luben_process_Process
  * Method:    prctl
@@ -104,4 +105,56 @@ JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_posix_1spawn
 JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_prctl
   (JNIEnv *jenv, jclass klass, jint option, jlong arg2, jlong arg3, jlong arg4, jlong arg5) {
     return prctl(option, arg2, arg3, arg4, arg5);
+}
+
+/*
+ * Class:     com_github_luben_process_Process
+ * Method:    getgrouplist
+ * Signature: (Ljava/lang/String;)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_github_luben_process_Process_getgrouplist
+  (JNIEnv *jenv, jclass klass, jstring juser) {
+
+    const char *user  = (*jenv)->GetStringUTFChars(jenv, juser, NULL);
+    int ngroups = 20;
+    int i;
+    gid_t *groups = malloc(ngroups * sizeof(gid_t));
+    struct group  *gr;
+    struct passwd *pw;
+
+    jobjectArray result;
+
+    pw = getpwnam(user);
+
+    if (pw == NULL) {
+        throw(jenv, "java/lang/RuntimeException", "getpwnam");
+    }
+
+    if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+        free(groups);
+        groups = malloc(ngroups * sizeof(gid_t));
+        if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+            throw(jenv, "java/lang/RuntimeException", "getpwnam");
+        }
+    }
+
+    result = (jobjectArray)(*jenv)->NewObjectArray(jenv,
+            (jsize) ngroups,
+            (*jenv)->FindClass(jenv, "java/lang/String"),
+            (*jenv)->NewStringUTF(jenv, ""));
+    if (result == NULL) {
+        throw(jenv, "java/lang/RuntimeException", "Out of memory");
+    }
+
+    for (i = 0; i < ngroups; i++) {
+        gr = getgrgid(groups[i]);
+        if (gr != NULL) {
+            (*jenv)->SetObjectArrayElement(
+                    jenv, result, (jsize) i,
+                    (*jenv)->NewStringUTF(jenv, gr->gr_name));
+        }
+    }
+
+    free(groups);
+    return(result);
 }
