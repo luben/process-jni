@@ -91,7 +91,8 @@ JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_posix_1spawn
     int pid;
     int status = posix_spawn(&pid, path, NULL, NULL, args, environ);
     if (status != 0) {
-        throw(jenv, "java/lang/RunitimeException", strerror(status));
+        throw(jenv, "java/lang/RuntimeException", strerror(status));
+        return 0;
     }
     freeArgv(jenv, args, params);
     return pid;
@@ -127,14 +128,18 @@ JNIEXPORT jobjectArray JNICALL Java_com_github_luben_process_Process_getgrouplis
     pw = getpwnam(user);
 
     if (pw == NULL) {
+        free(groups);
         throw(jenv, "java/lang/RuntimeException", "getpwnam");
+        return NULL;
     }
 
     if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
         free(groups);
         groups = malloc(ngroups * sizeof(gid_t));
         if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+            free(groups);
             throw(jenv, "java/lang/RuntimeException", "getpwnam");
+            return NULL;
         }
     }
 
@@ -143,7 +148,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_github_luben_process_Process_getgrouplis
             (*jenv)->FindClass(jenv, "java/lang/String"),
             (*jenv)->NewStringUTF(jenv, ""));
     if (result == NULL) {
-        throw(jenv, "java/lang/RuntimeException", "Out of memory");
+        free(groups);
+        outOfMemory(jenv);
+        return NULL;
     }
 
     for (i = 0; i < ngroups; i++) {
