@@ -14,7 +14,7 @@ crossPaths := false
 parallelExecution in Test := false
 
 // sbt-jni configuration
-jniLibraryName := "libprocess"
+jniLibraryName := "process"
 
 jniNativeClasses := Seq("com.github.luben.process.Process")
 
