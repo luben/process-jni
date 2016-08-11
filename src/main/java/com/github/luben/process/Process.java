@@ -1,5 +1,7 @@
 package com.github.luben.process;
 
+import com.github.luben.process.util.Native;
+
 public class Process {
 
     static {
@@ -14,5 +16,4 @@ public class Process {
     public static native int execv(String path, String[] args);
     public static native int posix_spawn(String path, String[] args);
     public static native int prctl(int option, long arg2, long arg3, long arg4, long arg5);
-    public static native String[] getgrouplist(String user);
 }

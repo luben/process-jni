@@ -1,4 +1,4 @@
-package com.github.luben.process;
+package com.github.luben.process.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,8 +8,17 @@ import java.io.InputStream;
 public enum Native {
     ;
 
+    private static final String libname = "libprocess";
+
     private static String osName() {
-        return System.getProperty("os.name").toLowerCase().replace(' ', '_');
+        String os = System.getProperty("os.name").toLowerCase().replace(' ', '_');
+        if (os.startsWith("win")){
+            return "win";
+        } else if (os.startsWith("mac")) {
+            return "darwin";
+        } else {
+            return os;
+        }
     }
 
     private static String osArch() {
@@ -17,15 +26,17 @@ public enum Native {
     }
 
     private static String libExtension() {
-        if (osName().contains("os_x")) {
-            return "dynlib";
+        if (osName().contains("os_x") || osName().contains("darwin")) {
+            return "dylib";
+         } else if (osName().contains("win")) {
+            return "dll";
         } else {
             return "so";
         }
     }
 
     private static String resourceName() {
-        return "/" + osName() + "/" + osArch() + "/libprocess." + libExtension();
+        return "/" + osName() + "/" + osArch() + "/" + libname + "." + libExtension();
     }
 
     private static boolean loaded = false;
@@ -46,7 +57,7 @@ public enum Native {
         }
         File tempLib;
         try {
-            tempLib = File.createTempFile("libprocess", "." + libExtension());
+            tempLib = File.createTempFile(libname, "." + libExtension());
             // copy to tempLib
             FileOutputStream out = new FileOutputStream(tempLib);
             try {
@@ -84,7 +95,7 @@ public enum Native {
                 }
             }
         } catch (IOException e) {
-            throw new ExceptionInInitializerError("Cannot unpack libprocess");
+            throw new ExceptionInInitializerError("Cannot unpack " + libname);
         }
     }
 }
