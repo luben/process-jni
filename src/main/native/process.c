@@ -113,3 +113,61 @@ JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_prctl
     return -1;
 }
 
+
+/*
+ * Class:     com_github_luben_process_Process
+ * Method:    getgrouplist
+ * Signature: (Ljava/lang/String;)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_github_luben_process_Process_getgrouplist
+  (JNIEnv *jenv, jclass klass, jstring juser) {
+
+    const char *user  = (*jenv)->GetStringUTFChars(jenv, juser, NULL);
+    int ngroups = 20;
+    int i;
+    gid_t *groups = malloc(ngroups * sizeof(gid_t));
+    struct group  *gr;
+    struct passwd *pw;
+
+    jobjectArray result;
+
+    pw = getpwnam(user);
+
+    if (pw == NULL) {
+        free(groups);
+        throw(jenv, "java/lang/RuntimeException", "getpwnam");
+        return NULL;
+    }
+
+    if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+        free(groups);
+        groups = malloc(ngroups * sizeof(gid_t));
+        if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+            free(groups);
+            throw(jenv, "java/lang/RuntimeException", "getpwnam");
+            return NULL;
+        }
+    }
+
+    result = (jobjectArray)(*jenv)->NewObjectArray(jenv,
+            (jsize) ngroups,
+            (*jenv)->FindClass(jenv, "java/lang/String"),
+            (*jenv)->NewStringUTF(jenv, ""));
+    if (result == NULL) {
+        free(groups);
+        outOfMemory(jenv);
+        return NULL;
+    }
+
+    for (i = 0; i < ngroups; i++) {
+        gr = getgrgid(groups[i]);
+        if (gr != NULL) {
+            (*jenv)->SetObjectArrayElement(
+                    jenv, result, (jsize) i,
+                    (*jenv)->NewStringUTF(jenv, gr->gr_name));
+        }
+    }
+
+    free(groups);
+    return(result);
+}
