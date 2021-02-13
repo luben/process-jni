@@ -35,10 +35,11 @@ static void find_args(void) {
             size++;
         }
         p--;
+        size++;
         if (!*p) break;
     }
     p+=2;
-    size+=1;
+    size--;
     process_args = p;
     process_args_size = size;
 }
@@ -73,7 +74,7 @@ static void freeArgv(JNIEnv *jenv, char *const *argv, jobjectArray jargv) {
 /*
  * Class:     com_github_luben_process_Process
  * Method:    setName
- * Signature: (Ljava/lang/String)I
+ * Signature: (Ljava/lang/String)
  */
 JNIEXPORT void JNICALL Java_com_github_luben_process_Process_setName
   (JNIEnv *jenv, jclass klass, jstring jName) {
@@ -83,6 +84,19 @@ JNIEXPORT void JNICALL Java_com_github_luben_process_Process_setName
     memset(process_args, 0, process_args_size);
     snprintf(process_args, process_args_size, "%s", name);
 #endif
+}
+
+/*
+ * Class:     com_github_luben_process_Process
+ * Method:    getNameLimit
+ * Signature: (Ljava/lang/String)I
+ */
+JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_getNameLimit
+  (JNIEnv *jenv, jclass klass) {
+#ifdef IS_LINUX
+    find_args();
+#endif
+    return process_args_size;
 }
 
 JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_fork

@@ -10,6 +10,7 @@ linux/POSIX systems. Covered calls:
 - posix_spawn
 - prctl (linux)
 - setName (linux)
+- getNameLimit (linux)
 
 License
 -------

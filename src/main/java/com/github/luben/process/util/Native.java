@@ -8,7 +8,7 @@ import java.io.InputStream;
 public enum Native {
     ;
 
-    private static final String libname = "libprocess";
+    private static final String libname = "libprocess-jni";
 
     private static String osName() {
         String os = System.getProperty("os.name").toLowerCase().replace(' ', '_');
