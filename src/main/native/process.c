@@ -12,6 +12,9 @@
 
 extern char **environ;
 
+static char *process_args = NULL;
+static int process_args_size = 0;
+
 static void throw(JNIEnv *jenv, char *className, char *message) {
     jclass klass = (*jenv)->FindClass(jenv, className);
     (*jenv)->ThrowNew(jenv, klass, message);
@@ -20,6 +23,24 @@ static void throw(JNIEnv *jenv, char *className, char *message) {
 static void outOfMemory(JNIEnv *env) {
     throw(env, "java/lang/OutOfMemoryError",
         "cannot allocate more memory in native call");
+}
+
+static void find_args(void) {
+    if (process_args != NULL) return;
+    char *p = environ[0] - 1;
+    size_t size = 0;
+    while(1) {
+        while(*p) {
+            p--;
+            size++;
+        }
+        p--;
+        if (!*p) break;
+    }
+    p+=2;
+    size+=1;
+    process_args = p;
+    process_args_size = size;
 }
 
 static char *const *fetchArgv(JNIEnv *jenv, jobjectArray jargv) {
@@ -47,6 +68,21 @@ static void freeArgv(JNIEnv *jenv, char *const *argv, jobjectArray jargv) {
         (*jenv)->ReleaseStringUTFChars(jenv, jtext, *p);
     }
     free((void *)argv);
+}
+
+/*
+ * Class:     com_github_luben_process_Process
+ * Method:    setName
+ * Signature: (Ljava/lang/String)I
+ */
+JNIEXPORT void JNICALL Java_com_github_luben_process_Process_setName
+  (JNIEnv *jenv, jclass klass, jstring jName) {
+#ifdef IS_LINUX
+    const char *name  = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    find_args();
+    memset(process_args, 0, process_args_size);
+    snprintf(process_args, process_args_size, "%s", name);
+#endif
 }
 
 JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_fork
