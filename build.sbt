@@ -3,7 +3,7 @@ name := "process-jni"
 
 version := "0.2.1"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.13"
 
 enablePlugins(JniPlugin, SbtOsgi)
 

@@ -1,5 +1,5 @@
-JNI bindings to ZSTD Library
-Copyright (c) 2015, Luben Karavelov
+JNI bindings to libc to work with processes on POSIX/linux systems.
+Copyright (c) 2015-present, Luben Karavelov
 All rights reserved.
 
 BSD License
