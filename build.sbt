@@ -1,11 +1,11 @@
 
 name := "process-jni"
 
-version := "0.2.2"
+version := "0.2.3"
 
-scalaVersion := "2.12.13"
+scalaVersion := "2.13.12"
 
-enablePlugins(JniPlugin, SbtOsgi)
+enablePlugins(JniPlugin)
 
 autoScalaLibrary := false
 
@@ -26,13 +26,15 @@ jniLibSuffix := (System.getProperty("os.name").toLowerCase match {
 
 jniNativeCompiler := "gcc"
 
+jniGenerateHeaders := false
+
 jniUseCpp11 := false
 
 jniCppExtensions := Seq("c")
 
 jniGccFlags ++= Seq(
   "-Wundef", "-Wshadow", "-Wcast-align", "-Wstrict-prototypes",
-  "-Wno-unused-variable"
+  "-Wno-unused-variable", "-I/usr/lib/jvm/java-25-openjdk-amd64/include", "-I/usr/lib/jvm/java-25-openjdk-amd64/include/linux"
 ) ++ (System.getProperty("os.arch") match {
   case "amd64"|"x86_64"   => Seq("-msse4")
   case "i386"             => Seq("-msse4")
@@ -92,15 +94,4 @@ pomExtra := (
       <organizationUrl>https://github.com/luben</organizationUrl>
     </developer>
   </developers>
-)
-
-// OSGI
-
-osgiSettings
-
-OsgiKeys.bundleSymbolicName := "com.github.luben.process-jni"
-OsgiKeys.exportPackage  := Seq(s"""com.github.luben.process;version="${version.value}"""")
-OsgiKeys.privatePackage := Seq("com.github.luben.process.util", "include",
-  "linux.amd64", "linux.i386", "linux.aarch64", "linux.ppc64",
-  "aix.ppc64", "darwin.x86_64"
 )

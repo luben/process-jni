@@ -163,6 +163,15 @@ JNIEXPORT jint JNICALL Java_com_github_luben_process_Process_prctl
     return -1;
 }
 
+JNIEXPORT jstring JNICALL Java_com_github_luben_process_Process_getcurrentuser
+  (JNIEnv *jenv, jclass klass) {
+    struct passwd *pw = getpwuid(getuid());
+    if (pw == NULL) {
+        throw(jenv, "java/lang/RuntimeException", "getpwuid/getuid");
+        return NULL;
+    }
+    return (*jenv)->NewStringUTF(jenv, pw->pw_name);
+}
 
 /*
  * Class:     com_github_luben_process_Process
@@ -173,7 +182,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_github_luben_process_Process_getgrouplis
   (JNIEnv *jenv, jclass klass, jstring juser) {
 
     const char *user  = (*jenv)->GetStringUTFChars(jenv, juser, NULL);
-    int ngroups = 20;
+    int ngroups = 200;
     int i;
     gid_t *groups = malloc(ngroups * sizeof(gid_t));
     struct group  *gr;
@@ -182,17 +191,16 @@ JNIEXPORT jobjectArray JNICALL Java_com_github_luben_process_Process_getgrouplis
     jobjectArray result;
 
     pw = getpwnam(user);
-
     if (pw == NULL) {
         free(groups);
         throw(jenv, "java/lang/RuntimeException", "getpwnam");
         return NULL;
     }
 
-    if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+    if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups) == -1) {
         free(groups);
         groups = malloc(ngroups * sizeof(gid_t));
-        if (getgrouplist(user, pw->pw_gid, groups, &ngroups) == -1) {
+        if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups) == -1) {
             free(groups);
             throw(jenv, "java/lang/RuntimeException", "getpwnam");
             return NULL;
